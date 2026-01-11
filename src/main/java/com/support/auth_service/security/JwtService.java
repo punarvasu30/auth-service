@@ -1,0 +1,66 @@
+package com.support.auth_service.security;
+
+import com.support.auth_service.model.User;
+
+import java.time.Instant;
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.MacAlgorithm;
+
+@Service
+public class JwtService {
+
+    private static final long EXPIRATION_TIME = 60 * 60; // seconds
+
+    private static final MacAlgorithm ALGORITHM = Jwts.SIG.HS256;
+    private final SecretKey key = ALGORITHM.key().build();
+
+    public String generateToken(User user) {
+
+        Instant now = Instant.now();
+
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .claim("role", user.getRole().name())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(EXPIRATION_TIME)))
+                .signWith(key, ALGORITHM)
+                .compact();
+    }
+
+    public String extractSubject(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    public String extractRole(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parse(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+}
