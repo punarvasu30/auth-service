@@ -2,6 +2,9 @@ package com.support.auth_service.security;
 
 import com.support.auth_service.model.User;
 
+import cljs.tagged_literals.JSValue;
+
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 
@@ -10,6 +13,7 @@ import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.MacAlgorithm;
 
 @Service
@@ -18,7 +22,14 @@ public class JwtService {
     private static final long EXPIRATION_TIME = 60 * 60; // seconds
 
     private static final MacAlgorithm ALGORITHM = Jwts.SIG.HS256;
-    private final SecretKey key = ALGORITHM.key().build();
+
+    private final SecretKey key;
+
+    public JwtService(JSValue
+         
+         ("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateToken(User user) {
 
